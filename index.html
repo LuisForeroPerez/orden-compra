@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Orden de Compra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Fuente Oswald -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <!-- Íconos FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Oswald', sans-serif;
+      background: #000;
+      color: #fff;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00ff88;
+      animation: fadeInDown 1s ease-out;
+    }
+
+    #orderForm {
+      padding: 20px;
+      background-color: #121212;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      box-sizing: border-box;
+      animation: fadeIn 1.2s ease-in;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ccc;
+      transition: color 0.3s ease;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background-color: #1e1e1e;
+      color: #fff;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border 0.3s ease, background-color 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: #00ff88;
+      background-color: #2b2b2b;
+      outline: none;
+    }
+
+    .product-row {
+      margin-top: 10px;
+    }
+
+    .autocomplete-container {
+      position: relative;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #222;
+      border: 1px solid #555;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 100;
+      border-radius: 0 0 8px 8px;
+      color: #fff;
+    }
+
+    .autocomplete-item {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .autocomplete-item:hover {
+      background-color: #333;
+    }
+
+    .remove-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #ff4c4c;
+      font-size: 1.2rem;
+      float: right;
+      margin-top: 5px;
+    }
+
+    #resumen {
+      background: #1e1e1e;
+      padding: 15px;
+      margin-top: 10px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(255,255,255,0.05);
+      animation: fadeInUp 1s ease-in-out;
+    }
+
+    #resumen img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 10px;
+    }
+
+    #submitBtn {
+      margin-top: 15px;
+      background-color: #00ff88;
+      color: #000;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    #submitBtn:hover {
+      background-color: #00cc6a;
+      transform: scale(1.02);
+    }
+
+    #submitBtn:disabled {
+      background-color: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    #mensaje {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #00ff88;
+      text-align: center;
+      animation: fadeIn 1s ease-out;
+    }
+
+    #popupMensaje {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #00cc6a;
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+      opacity: 0;
+      animation: slideInRight 0.5s forwards;
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+<h2>Orden de Compra</h2>
+
+<form id="orderForm">
+  <label for="nombre">Nombre o Razón Social:</label>
+  <input type="text" id="nombre" required>
+
+  <label for="telefono">Teléfono Móvil (10 dígitos):</label>
+  <input type="tel" id="telefono" pattern="\d{10}" required>
+
+  <label for="direccion">Dirección:</label>
+  <input type="text" id="direccion" required>
+
+  <label for="ciudad">Ciudad:</label>
+  <div id="ciudadContainer" class="autocomplete-container">
+    <input type="text" id="ciudad" placeholder="Escribe tu ciudad" required autocomplete="off">
+    <div id="ciudadLista" class="autocomplete-list"></div>
+  </div>
+
+  <label for="email">Email:</label>
+  <input type="email" id="email" required>
+
+  <label>Productos:</label>
+<p style="margin-top: 0; color: #555; font-size: 0.9rem;">
+  Busca por nombre, marca o digita: <strong>"Promoción"</strong>
+</p>
+<div id="productList"></div>
+<button type="button" id="addProductBtn">Agregar Producto</button>
+
+  <label>Resumen de la Orden:</label>
+  <div id="resumen"></div>
+
+  <button type="submit" id="submitBtn" disabled>Enviar</button>
+  <div id="mensaje"></div>
+</form>
+
+<div id="popupMensaje"></div>
+
+<script>
+const URL_SHEETS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_I4yXGLO41u23JOKpJag-RyGIH8fHfcpCY7bdEOviyInW8nrjK5WQABkki7Vx5KJ-9Cj4UY5Rjrgr/pub?gid=513809294&single=true&output=csv';
+const URL_APPSCRIPT = "https://script.google.com/macros/s/AKfycbz9jmaO1PXvoXBB-KpMz0UduermBt0Zy4-wbaXztAndA5NWPwaltYFn0UD7eRj741U/exec"; // tu URL real aquí
+
+
+const catalogoProductos = [];
+const listaCiudades = ["Bogotá D.C.","Medellín","Cali","Barranquilla","Abejorral","Abrego","Abriaquí","Acacias","Acandí","Acevedo","Achí","Agrado","Agua de Dios","Aguachica","Aguada","Aguadas","Aguazul","Agustín Codazzi","Aipe","Albán","Albán","Albania","Albania","Albania","Alcalá","Aldana","Alejandría","Algarrobo","Algeciras","Almaguer","Almeida","Alpujarra","Altamira","Alto Baudo","Altos del Rosario","Alvarado","Amagá","Amalfi","Ambalema","Anapoima","Ancuyá","Andalucía","Andes","Angelópolis","Angostura","Anolaima","Anorí","Anserma","Ansermanuevo","Anza","Anzoátegui","Apartadó","Apía","Apulo","Aquitania","Aracataca","Aranzazu","Aratoca","Arauca","Arauquita","Arbeláez","Arboleda","Arboledas","Arboletes","Arcabuco","Arenal","Argelia","Argelia","Argelia","Ariguaní","Arjona","Armenia","Armenia","Armero","Arroyohondo","Astrea","Ataco","Atrato","Ayapel","Bagadó","Bahía Solano","Bajo Baudó","Balboa","Balboa","Baranoa","Baraya","Barbacoas","Barbosa","Barbosa","Barichara","Barranca de Upía","Barrancabermeja","Barrancas","Barranco de Loba","Barranco Minas","Becerril","Belalcázar","Belén","Belén","Belén de Bajira","Belén de Los Andaquies","Belén de Umbría","Bello","Belmira","Beltrán","Berbeo","Betania","Betéitiva","Betulia","Betulia","Bituima","Boavita","Bochalema","Bojacá","Bojaya","Bolívar","Bolívar","Bolívar","Bosconia","Boyacá","Briceño","Briceño","Bucaramanga","Bucarasica","Buena Vista","Buenaventura","Buenavista","Buenavista","Buenavista","Buenos Aires","Buesaco","Bugalagrande","Buriticá","Busbanzá","Cabrera","Cabrera","Cabuyaro","Cacahual","Cáceres","Cachipay","Cachirá","Cácota","Caicedo","Caicedonia","Caimito","Cajamarca","Cajibío","Cajicá","Calamar","Calamar","Calarcá","Caldas","Caldas","Caldono","California","Calima","Caloto","Campamento","Campo de La Cruz","Campoalegre","Campohermoso","Canalete","Candelaria","Candelaria","Cantagallo","Cañasgordas","Caparrapí","Capitanejo","Caqueza","Caracolí","Caramanta","Carcasí","Carepa","Carmen de Apicala","Carmen de Carupa","Carmen del Darien","Carolina","Cartagena","Cartagena del Chairá","Cartago","Carurú","Casabianca","Castilla la Nueva","Caucasia","Cepitá","Cereté","Cerinza","Cerrito","Cerro San Antonio","Cértegui","Chachagüí","Chaguaní","Chalán","Chámeza","Chaparral","Charalá","Charta","Chía","Chigorodó","Chimá","Chimá","Chimichagua","Chinácota","Chinavita","Chinchiná","Chinú","Chipaque","Chipatá","Chiquinquirá","Chíquiza","Chiriguaná","Chiscas","Chita","Chitagá","Chitaraque","Chivatá","Chivolo","Chivor","Choachí","Chocontá","Cicuco","Ciénaga","Ciénaga de Oro","Ciénega","Cimitarra","Circasia","Cisneros","Ciudad Bolívar","Clemencia","Cocorná","Coello","Cogua","Colombia","Colón","Colón","Coloso","Cómbita","Concepción","Concepción","Concordia","Concordia","Condoto","Confines","Consaca","Contadero","Contratación","Convención","Copacabana","Coper","Córdoba","Córdoba","Córdoba","Corinto","Coromoro","Corozal","Corrales","Cota","Cotorra","Covarachía","Coveñas","Coyaima","Cravo Norte","Cuaspud","Cubará","Cubarral","Cucaita","Cucunubá","Cúcuta","Cucutilla","Cuítiva","Cumaral","Cumaribo","Cumbal","Cumbitara","Cunday","Curillo","Curití","Curumaní","Dabeiba","Dagua","Dibula","Distracción","Dolores","Don Matías","Dosquebradas","Duitama","Durania","Ebéjico","El Águila","El Bagre","El Banco","El Cairo","El Calvario","El Cantón del San Pablo","El Carmen","El Carmen de Atrato","El Carmen de Bolívar","El Carmen de Chucurí","El Carmen de Viboral","El Castillo","El Cerrito","El Charco","El Cocuy","El Colegio","El Copey","El Doncello","El Dorado","El Dovio","El Encanto","El Espino","El Guacamayo","El Guamo","El Litoral del San Juan","El Molino","El Paso","El Paujil","El Peñol","El Peñón","El Peñón","El Peñón","El Piñon","El Playón","El Retén","El Retorno","El Roble","El Rosal","El Rosario","El Santuario","El Tablón de Gómez","El Tambo","El Tambo","El Tarra","El Zulia","Elías","Encino","Enciso","Entrerrios","Envigado","Espinal","Facatativá","Falan","Filadelfia","Filandia","Firavitoba","Flandes","Florencia","Florencia","Floresta","Florián","Florida","Floridablanca","Fomeque","Fonseca","Fortul","Fosca","Francisco Pizarro","Fredonia","Fresno","Frontino","Fuente de Oro","Fundación","Funes","Funza","Fúquene","Fusagasugá","Gachala","Gachancipá","Gachantivá","Gachetá","Galán","Galapa","Galeras","Gama","Gamarra","Gambita","Gameza","Garagoa","Garzón","Génova","Gigante","Ginebra","Giraldo","Girardot","Girardota","Girón","Gómez Plata","González","Gramalote","Granada","Granada","Granada","Guaca","Guacamayas","Guacarí","Guachené","Guachetá","Guachucal","Guadalajara de Buga","Guadalupe","Guadalupe","Guadalupe","Guaduas","Guaitarilla","Gualmatán","Guamal","Guamal","Guamo","Guapi","Guapotá","Guaranda","Guarne","Guasca","Guatapé","Guataquí","Guatavita","Guateque","Guática","Guavatá","Guayabal de Siquima","Guayabetal","Guayatá","Güepsa","Güicán","Gutiérrez","Hacarí","Hatillo de Loba","Hato","Hato Corozal","Hatonuevo","Heliconia","Herrán","Herveo","Hispania","Hobo","Honda","Ibagué","Icononzo","Iles","Imués","Inírida","Inzá","Ipiales","Iquira","Isnos","Istmina","Itagui","Ituango","Iza","Jambaló","Jamundí","Jardín","Jenesano","Jericó","Jericó","Jerusalén","Jesús María","Jordán","Juan de Acosta","Junín","Juradó","La Apartada","La Argentina","La Belleza","La Calera","La Capilla","La Ceja","La Celia","La Chorrera","La Cruz","La Cumbre","La Dorada","La Esperanza","La Estrella","La Florida","La Gloria","La Guadalupe","La Jagua de Ibirico","La Jagua del Pilar","La Llanada","La Macarena","La Merced","La Mesa","La Montañita","La Palma","La Paz","La Paz","La Pedrera","La Peña","La Pintada","La Plata","La Playa","La Primavera","La Salina","La Sierra","La Tebaida","La Tola","La Unión","La Unión","La Unión","La Unión","La Uvita","La Vega","La Vega","La Victoria","La Victoria","La Victoria","La Virginia","Labateca","Labranzagrande","Landázuri","Lebríja","Leguízamo","Leiva","Lejanías","Lenguazaque","Lérida","Leticia","Líbano","Liborina","Linares","Lloró","López","Lorica","Los Andes","Los Córdobas","Los Palmitos","Los Patios","Los Santos","Lourdes","Luruaco","Macanal","Macaravita","Maceo","Macheta","Madrid","Magangué","Magüí","Mahates","Maicao","Majagual","Málaga","Malambo","Mallama","Manatí","Manaure","Manaure","Maní","Manizales","Manta","Manzanares","Mapiripán","Mapiripana","Margarita","María la Baja","Marinilla","Maripí","Mariquita","Marmato","Marquetalia","Marsella","Marulanda","Matanza","Medina","Medio Atrato","Medio Baudó","Medio San Juan","Melgar","Mercaderes","Mesetas","Milán","Miraflores","Miraflores","Miranda","Miriti Paraná","Mistrató","Mitú","Mocoa","Mogotes","Molagavita","Momil","Mompós","Mongua","Monguí","Moniquirá","Montebello","Montecristo","Montelíbano","Montenegro","Montería","Monterrey","Moñitos","Morales","Morales","Morelia","Morichal","Morroa","Mosquera","Mosquera","Motavita","Murillo","Murindó","Mutatá","Mutiscua","Muzo","Nariño","Nariño","Nariño","Nátaga","Natagaima","Nechí","Necoclí","Neira","Neiva","Nemocón","Nilo","Nimaima","Nobsa","Nocaima","Norcasia","Norosí","Nóvita","Nueva Granada","Nuevo Colón","Nunchía","Nuquí","Obando","Ocamonte","Ocaña","Oiba","Oicatá","Olaya","Olaya Herrera","Onzaga","Oporapa","Orito","Orocué","Ortega","Ospina","Otanche","Ovejas","Pachavita","Pacho","Pacoa","Pácora","Padilla","Páez","Páez","Paicol","Pailitas","Paime","Paipa","Pajarito","Palermo","Palestina","Palestina","Palmar","Palmar de Varela","Palmas del Socorro","Palmira","Palmito","Palocabildo","Pamplona","Pamplonita","Pana Pana","Pandi","Panqueba","Papunahua","Páramo","Paratebueno","Pasca","Pasto","Patía","Pauna","Paya","Paz de Ariporo","Paz de Río","Pedraza","Pelaya","Pensilvania","Peñol","Peque","Pereira","Pesca","Piamonte","Piedecuesta","Piedras","Piendamó","Pijao","Pijiño del Carmen","Pinchote","Pinillos","Piojó","Pisba","Pital","Pitalito","Pivijay","Planadas","Planeta Rica","Plato","Policarpa","Polonuevo","Ponedera","Popayán","Pore","Potosí","Pradera","Prado","Providencia","Providencia","Pueblo Bello","Pueblo Nuevo","Pueblo Rico","Pueblo Viejo","Pueblorrico","Puente Nacional","Puerres","Puerto Alegría","Puerto Arica","Puerto Asís","Puerto Berrío","Puerto Boyacá","Puerto Caicedo","Puerto Carreño","Puerto Colombia","Puerto Colombia","Puerto Concordia","Puerto Escondido","Puerto Gaitán","Puerto Guzmán","Puerto Libertador","Puerto Lleras","Puerto López","Puerto Nare","Puerto Nariño","Puerto Parra","Puerto Rico","Puerto Rico","Puerto Rondón","Puerto Salgar","Puerto Santander","Puerto Santander","Puerto Tejada","Puerto Triunfo","Puerto Wilches","Pulí","Pupiales","Puracé","Purificación","Purísima","Quebradanegra","Quetame","Quibdó","Quimbaya","Quinchía","Quípama","Quipile","Ragonvalia","Ramiriquí","Ráquira","Recetor","Regidor","Remedios","Remolino","Repelón","Restrepo","Restrepo","Retiro","Ricaurte","Ricaurte","Rio Blanco","Río de Oro","Río Iro","Río Quito","Río Viejo","Riofrío","Riohacha","Rionegro","Rionegro","Riosucio","Riosucio","Risaralda","Rivera","Roberto Payán","Roldanillo","Roncesvalles","Rondón","Rosas","Rovira","Sabana de Torres","Sabanagrande","Sabanalarga","Sabanalarga","Sabanalarga","Sabanas de San Angel","Sabaneta","Saboyá","Sácama","Sáchica","Sahagún","Saladoblanco","Salamina","Salamina","Salazar","Saldaña","Salento","Salgar","Samacá","Samaná","Samaniego","Sampués","San Agustín","San Alberto","San Andrés","San Andrés","San Andrés de Cuerquía","San Andrés de Tumaco","San Andrés Sotavento","San Antero","San Antonio","San Antonio del Tequendama","San Benito","San Benito Abad","San Bernardo","San Bernardo","San Bernardo del Viento","San Calixto","San Carlos","San Carlos","San Carlos de Guaroa","San Cayetano","San Cayetano","San Cristóbal","San Diego","San Eduardo","San Estanislao","San Felipe","San Fernando","San Francisco","San Francisco","San Francisco","San Gil","San Jacinto","San Jacinto del Cauca","San Jerónimo","San Joaquín","San José","San José de La Montaña","San José de Miranda","San José de Pare","San José de Uré","San José del Fragua","San José del Guaviare","San José del Palmar","San Juan de Arama","San Juan de Betulia","San Juan de Río Seco","San Juan de Urabá","San Juan del Cesar","San Juan Nepomuceno","San Juanito","San Lorenzo","San Luis","San Luis","San Luis de Gaceno","San Luis de Gaceno","San Luis de Sincé","San Marcos","San Martín","San Martín","San Martín de Loba","San Mateo","San Miguel","San Miguel","San Miguel de Sema","San Onofre","San Pablo","San Pablo de Borbur","San Pablo de Borbur","San Pedro","San Pedro","San Pedro","San Pedro de Cartago","San Pedro de Uraba","San Pelayo","San Rafael","San Roque","San Sebastián","San Sebastián de Buenavista","San Vicente","San Vicente de Chucurí","San Vicente del Caguán","San Zenón","Sandoná","Santa Ana","Santa Bárbara","Santa Bárbara","Santa Bárbara","Santa Bárbara de Pinto","Santa Catalina","Santa Helena del Opón","Santa Isabel","Santa Lucía","Santa María","Santa María","Santa Marta","Santa Rosa","Santa Rosa","Santa Rosa de Cabal","Santa Rosa de Osos","Santa Rosa de Viterbo","Santa Rosa del Sur","Santa Rosalía","Santa Sofía","Santacruz","Santafé de Antioquia","Santana","Santander de Quilichao","Santiago","Santiago","Santiago de Tolú","Santo Domingo","Santo Tomás","Santuario","Sapuyes","Saravena","Sardinata","Sasaima","Sativanorte","Sativasur","Segovia","Sesquilé","Sevilla","Siachoque","Sibaté","Sibundoy","Silos","Silvania","Silvia","Simacota","Simijaca","Simití","Sincelejo","Sipí","Sitionuevo","Soacha","Soatá","Socha","Socorro","Socotá","Sogamoso","Solano","Soledad","Solita","Somondoco","Sonsón","Sopetrán","Soplaviento","Sopó","Sora","Soracá","Sotaquirá","Sotara","Suaita","Suan","Suárez","Suárez","Suaza","Subachoque","Sucre","Sucre","Sucre","Suesca","Supatá","Supía","Suratá","Susa","Susacón","Sutamarchán","Sutatausa","Sutatenza","Tabio","Tadó","Talaigua Nuevo","Tamalameque","Támara","Tame","Támesis","Taminango","Tangua","Taraira","Tarapacá","Tarazá","Tarqui","Tarso","Tasco","Tauramena","Tausa","Tello","Tena","Tenerife","Tenjo","Tenza","Teorama","Teruel","Tesalia","Tibacuy","Tibaná","Tibasosa","Tibirita","Tibú","Tierralta","Timaná","Timbío","Timbiquí","Tinjacá","Tipacoque","Tiquisio","Titiribí","Toca","Tocaima","Tocancipá","Togüí","Toledo","Toledo","Tolú Viejo","Tona","Tópaga","Topaipí","Toribio","Toro","Tota","Totoró","Trinidad","Trujillo","Tubará","Tuchín","Tuluá","Tunja","Tununguá","Túquerres","Turbaco","Turbaná","Turbo","Turmequé","Tuta","Tutazá","Ubalá","Ubaque","Ulloa","Umbita","Une","Unguía","Unión Panamericana","Uramita","Uribe","Uribia","Urrao","Urumita","Usiacurí","Útica","Valdivia","Valencia","Valle de Guamez","Valle de San José","Valle de San Juan","Valledupar","Valparaíso","Valparaíso","Vegachí","Vélez","Venadillo","Venecia","Venecia","Ventaquemada","Vergara","Versalles","Vetas","Vianí","Victoria","Vigía del Fuerte","Vijes","Villa Caro","Villa de Leyva","Villa de San Diego de Ubate","Villa del Rosario","Villa Rica","Villagarzón","Villagómez","Villahermosa","Villamaría","Villanueva","Villanueva","Villanueva","Villanueva","Villapinzón","Villarrica","Villavicencio","Villavieja","Villeta","Viotá","Viracachá","Vista Hermosa","Viterbo","Yacopí","Yacuanquer","Yaguará","Yalí","Yarumal","Yavaraté","Yolombó","Yondó","Yopal","Yotoco","Yumbo","Zambrano","Zapatoca","Zapayán","Zaragoza","Zarzal","Zetaquira","Zipacón","Zipaquirá","Zona Bananera"];
+
+const productList = document.getElementById("productList");
+const resumen = document.getElementById("resumen");
+const submitBtn = document.getElementById("submitBtn");
+const mensaje = document.getElementById("mensaje");
+const inputCiudad = document.getElementById("ciudad");
+const ciudadLista = document.getElementById("ciudadLista");
+let formularioEnviado = false; // NUEVA bandera
+
+async function cargarProductosDesdeSheets() {
+  try {
+    const response = await fetch(URL_SHEETS);
+    const data = await response.text();
+    const rows = data.split('\n').slice(1);
+    rows.forEach(row => {
+      const [nombre, precio, imagen] = row.split(',');
+      if (nombre) {
+        catalogoProductos.push({
+          nombre: nombre.trim(),
+          precio: parseFloat(precio.trim()),
+          imagen: imagen.trim()
+        });
+      }
+    });
+    if (!productList.querySelector(".product-row")) createProductRow();
+    updateResumen();
+  } catch (error) {
+    console.error('Error cargando productos:', error);
+  }
+}
+
+function createProductRow(productName = '', cantidad = '') {
+  const div = document.createElement("div");
+  div.className = "product-row";
+  const container = document.createElement("div");
+  container.className = "autocomplete-container";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Buscar producto";
+  input.value = productName;
+  input.required = true;
+
+  const list = document.createElement("div");
+  list.className = "autocomplete-list";
+  list.style.display = "none";
+
+  input.addEventListener("input", () => {
+    const search = input.value.toLowerCase();
+    list.innerHTML = '';
+    if (!search) return list.style.display = "none";
+    const matches = catalogoProductos.filter(p => p.nombre.toLowerCase().includes(search));
+    if (matches.length === 0) return list.style.display = "none";
+    matches.forEach(producto => {
+      const item = document.createElement("div");
+      item.className = "autocomplete-item";
+      item.textContent = producto.nombre;
+      item.onclick = () => {
+        input.value = producto.nombre;
+        list.style.display = "none";
+        updateResumen();
+        checkValidity();
+      };
+      list.appendChild(item);
+    });
+    list.style.display = "block";
+  });
+
+  container.appendChild(input);
+  container.appendChild(list);
+
+  const inputCantidad = document.createElement("input");
+  inputCantidad.type = "number";
+  inputCantidad.placeholder = "Cantidad";
+  inputCantidad.min = "1";
+  inputCantidad.required = true;
+  inputCantidad.value = cantidad;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-btn";
+  removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  removeBtn.onclick = () => {
+    div.remove();
+    updateResumen();
+    checkValidity();
+  };
+
+  [input, inputCantidad].forEach(el => el.addEventListener("input", () => {
+    updateResumen();
+    checkValidity();
+  }));
+
+  div.appendChild(container);
+  div.appendChild(inputCantidad);
+  div.appendChild(removeBtn);
+  productList.appendChild(div);
+}
+
+function updateResumen() {
+  resumen.innerHTML = '';
+  let total = 0;
+  const rows = productList.querySelectorAll(".product-row");
+  rows.forEach(row => {
+    const productoNombre = row.querySelector("input[type=text]").value.trim();
+    const cantidad = parseInt(row.querySelector("input[type=number]").value.trim());
+    if (productoNombre && cantidad) {
+      const producto = catalogoProductos.find(p => p.nombre === productoNombre);
+      if (!producto) return;
+      const subtotal = producto.precio * cantidad;
+      total += subtotal;
+
+      const item = document.createElement("div");
+      item.style.display = "flex";
+      item.style.justifyContent = "space-between";
+      const left = document.createElement("div");
+      left.style.display = "flex";
+      const img = document.createElement("img");
+      img.src = producto.imagen;
+      img.alt = productoNombre;
+      const texto = document.createElement("span");
+      texto.textContent = `${productoNombre} (x${cantidad})`;
+
+      left.appendChild(img);
+      left.appendChild(texto);
+      item.appendChild(left);
+
+      const precio = document.createElement("strong");
+      precio.textContent = `$${subtotal.toLocaleString()}`;
+      item.appendChild(precio);
+      resumen.appendChild(item);
+    }
+  });
+
+  const totalDiv = document.createElement("div");
+  totalDiv.style.borderTop = "1px solid #ccc";
+  totalDiv.style.marginTop = "10px";
+  totalDiv.style.paddingTop = "10px";
+  totalDiv.style.fontWeight = "bold";
+  totalDiv.style.display = "flex";
+  totalDiv.style.justifyContent = "space-between";
+  totalDiv.innerHTML = `<span>Total:</span><span>$${total.toLocaleString()}</span>`;
+  resumen.appendChild(totalDiv);
+}
+
+function checkValidity() {
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const direccion = document.getElementById("direccion").value.trim();
+  const ciudad = document.getElementById("ciudad").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const rows = productList.querySelectorAll(".product-row");
+  let hasProduct = false;
+  rows.forEach(row => {
+    const producto = row.querySelector("input[type=text]").value.trim();
+    const cantidad = row.querySelector("input[type=number]").value.trim();
+    if (producto && cantidad) hasProduct = true;
+  });
+  submitBtn.disabled = !(nombre && telefono.match(/^\d{10}$/) && direccion && ciudad && email && hasProduct);
+}
+
+function mostrarPopup(mensaje) {
+  const popup = document.getElementById('popupMensaje');
+  popup.textContent = mensaje;
+  popup.style.display = 'block';
+  setTimeout(() => { popup.style.opacity = 1; }, 50);
+  setTimeout(() => {
+    popup.style.opacity = 0;
+    setTimeout(() => popup.style.display = 'none', 500);
+  }, 2000);
+}
+
+inputCiudad.addEventListener("input", () => {
+  const search = inputCiudad.value.toLowerCase();
+  ciudadLista.innerHTML = '';
+  if (!search) return ciudadLista.style.display = "none";
+  const matches = listaCiudades.filter(ciudad => ciudad.toLowerCase().includes(search));
+  if (matches.length === 0) return ciudadLista.style.display = "none";
+  matches.forEach(ciudad => {
+    const item = document.createElement("div");
+    item.className = "autocomplete-item";
+    item.textContent = ciudad;
+    item.onclick = () => {
+      inputCiudad.value = ciudad;
+      ciudadLista.style.display = "none";
+      checkValidity();
+    };
+    ciudadLista.appendChild(item);
+  });
+  ciudadLista.style.display = "block";
+});
+
+document.addEventListener("click", function(event) {
+  if (!ciudadLista.contains(event.target) && event.target !== inputCiudad) {
+    ciudadLista.style.display = "none";
+  }
+});
+
+document.getElementById("addProductBtn").onclick = () => {
+  createProductRow();
+  checkValidity();
+  mostrarPopup("Producto agregado");
+};
+
+document.getElementById("orderForm").addEventListener("input", checkValidity);
+
+document.getElementById("orderForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
+
+  if (formularioEnviado) return;
+  formularioEnviado = true;
+  submitBtn.disabled = true;
+
+  const nombre = document.getElementById("nombre").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const direccion = document.getElementById("direccion").value.trim();
+  const ciudad = document.getElementById("ciudad").value.trim();
+  const email = document.getElementById("email").value.trim();
+
+  const productos = [];
+  let total = 0;
+  const rows = productList.querySelectorAll(".product-row");
+  rows.forEach(row => {
+    const productoNombre = row.querySelector("input[type=text]").value.trim();
+    const cantidad = parseInt(row.querySelector("input[type=number]").value.trim());
+    const producto = catalogoProductos.find(p => p.nombre === productoNombre);
+    if (producto && cantidad) {
+      productos.push(`${productoNombre} (x${cantidad})`);
+      total += producto.precio * cantidad;
+    }
+  });
+
+  const datos = {
+    nombre,
+    telefono,
+    direccion,
+    ciudad,
+    email,
+    productos: productos.join(' | '),
+    total
+  };
+
+  try {
+    await fetch(URL_APPSCRIPT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos)
+    });
+
+    this.reset();
+    productList.innerHTML = '';
+    resumen.innerHTML = '';
+    mensaje.innerHTML = `<div style="background:#e0ffe0; padding:15px; border-radius:10px;">
+      <strong>¡Gracias por tu compra!</strong><br>
+      Recibirás tu orden muy pronto.
+    </div>`;
+    mostrarPopup("Orden enviada correctamente!");
+
+  } catch (error) {
+    console.error("Error enviando datos:", error);
+    mostrarPopup("Error al enviar la orden ❗");
+    formularioEnviado = false;
+    submitBtn.disabled = false;
+  }
+});
+
+cargarProductosDesdeSheets();
+</script>
+
+</body>
+</html>
+
